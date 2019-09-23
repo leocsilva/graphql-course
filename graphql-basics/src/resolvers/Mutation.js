@@ -1,7 +1,7 @@
 import uuidv4 from 'uuid/v4'
 
 const Mutation = {
-    deleteComment(parent, args, { db }, info) {
+    deleteComment(parent, args, { db, pubSub }, info) {
         const commentIndex = db.comments.findIndex((comment) => comment.id === args.id)
 
         if (commentIndex === -1) {
@@ -10,10 +10,17 @@ const Mutation = {
 
         const deletedComments = db.comments.splice(commentIndex, 1)
 
+        pubSub.publish(`comment ${deletedComments[0].post_id}`,  {
+            comment : {
+                mutation: 'DELETED',
+                data: deletedComments[0]
+            }
+        })
+
         return deletedComments[0]
 
     },          
-    deletePost(parent, args, { db }, info) {
+    deletePost(parent, args, { db, pubSub }, info) {
         const postIndex = db.posts.findIndex((post) => post.id === args.id)
 
         if (postIndex === -1) {
@@ -23,6 +30,13 @@ const Mutation = {
         const deletedPosts = db.posts.splice(postIndex, 1)
 
         db.comments = db.comments.filter((comment) => comment.post_id !== args.id)
+
+        pubSub.publish('post', {
+            post: {
+                mutation: 'DELETED',
+                data: deletedPosts[0]
+            }
+        })
 
         return deletedPosts[0]
 
@@ -69,7 +83,12 @@ const Mutation = {
         }
 
         db.comments.push(comment)
-        pubSub.publish(`comment ${args.data.postId}`, {comment})
+        pubSub.publish(`comment ${args.data.postId}`, {
+            comment: {
+                mutation: 'CREATED',
+                data: comment
+            }
+        })
 
         return comment
 
@@ -98,7 +117,10 @@ const Mutation = {
 
         const post = {
             id: uuidv4(),
-            ...args.data
+            title: args.data.title,
+            body: args.data.body,
+            published: args.data.published,
+            author: args.data.authorId
         }
 
         db.posts.push(post)
@@ -131,7 +153,7 @@ const Mutation = {
         return user
 
     },
-    updatePost(parent, args, { db }, info) {
+    updatePost(parent, args, { db, pubSub }, info) {
         const post = db.posts.find((post) => post.id === args.id)
 
         if (!post) {
@@ -142,10 +164,17 @@ const Mutation = {
         post.body = args.data.body
         post.published = args.data.published
 
+        pubSub.pubSub('post', {
+            post: {
+                mutation: 'UPDATED',
+                data: post
+            }
+        })
+
         return post
 
     },
-    updateComment(parent, args, { db }, info) {
+    updateComment(parent, args, { db, pubSub }, info) {
         const comment = db.comments.find((comment) => comment.id === args.id)
 
         if (!comment) {
@@ -153,6 +182,14 @@ const Mutation = {
         }
 
         comment.text = args.data.text
+
+        pubSub.publish(`comment ${comment.post_id}`, {
+            comment: {
+                mutation: 'UPDATED',
+                data: comment
+            }
+        })
+
         return comment
     }
 }
