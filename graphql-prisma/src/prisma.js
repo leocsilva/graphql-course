@@ -5,9 +5,16 @@ const prisma = new Prisma({
     endpoint: 'http://localhost:4466'
 })
 
+prisma.mutation.updatePost({
+    data : {
+        body: "Corpo alterado",
+        published: true,
+    },
+    where: {
+        id: "ck111wut1003s0725lrovx3ie"
+    }
 
-
-const users1 = prisma.query.comments(null, '{id text author {id name}}').then((data)=>{
-
+}, '{id title body published}').then((data)=>{
     console.log(data);
+    
 })
