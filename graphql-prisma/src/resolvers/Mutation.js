@@ -93,20 +93,17 @@ const Mutation = {
         return comment
 
     },
-    createUser(parent, args, { db }, info) {
+    async createUser(parent, args, { prisma }, info) {
 
-        if (db.users.some((user) => user.email === args.data.email)) {
-            throw new Error('Email taken')
+        const emailTaken = await prisma.exists.User({email: args.data.email})
+
+        if (emailTaken) {
+            throw new Error('Email taken!')
         }
 
-        const user = {
-            id: uuidv4(),
-            ...args.data
-        }
+        const user = await prisma.mutation.createUser({})
 
-        db.users.push(user)
 
-        return user
 
     },
     createPost(parent, args, { db, pubSub }, info) {

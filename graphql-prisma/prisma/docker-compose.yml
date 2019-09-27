@@ -18,6 +18,5 @@ services:
             user: ngobpoymfmhwig
             password: adfbc9d11289bd8a93d7632c9c8da354d2548f4a446cf37b2b3c8e3b454f0d45
             ssl: true
-            schema: public
             port: '5432'
             migrations: true

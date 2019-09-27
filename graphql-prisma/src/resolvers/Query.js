@@ -1,12 +1,51 @@
 const Query = {
-    comments(parent, args, { db }, info) {
-        return db.comments
+    users(parent, args, { prisma }, info) {
+
+        const opArgs = {}
+
+        if (args.query) {
+            opArgs.where = {
+                OR: [
+                    {
+                        name_contains: args.query
+                    },
+                    {
+                        email_contains: args.query
+                    }
+                ]
+            }
+        }
+
+        return prisma.query.users(opArgs, info)
     },
-    posts(parent, args, { db }, info) {
-        return args.query ? db.posts.filter((post) => post.title.toLocaleLowerCase().includes(args.query.toLocaleLowerCase()) || post.body.toLocaleLowerCase().includes(args.query.toLocaleLowerCase())) : db.posts
+    comments(parent, args, { prisma }, info) {
+        const opArgs = {}
+
+        if (args.query) {
+            opArgs.where = {
+                text_contains: args.query
+            }
+        }
+
+        return prisma.query.comments(opArgs, info)
     },
-    users(parent, args, { db }, info) {
-        return args.query ? db.users.filter((user) => user.name.toLocaleLowerCase().includes(args.query.toLocaleLowerCase())) : db.users
+    posts(parent, args, { prisma }, info) {
+        const opArgs = {}
+
+        if (args.query) {
+            opArgs.where = {
+                OR: [
+                    {
+                        title_contains: args.query
+                    },
+                    {
+                        body_contains: args.query
+                    }
+                ]
+            }
+        }
+
+        return prisma.query.posts(opArgs, info)
     },
     me() {
         return {
@@ -26,4 +65,4 @@ const Query = {
     }
 }
 
-export {Query as default}
+export { Query as default }
