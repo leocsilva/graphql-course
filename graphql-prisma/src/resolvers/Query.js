@@ -1,3 +1,5 @@
+import getUserId from '../utils/getUserId'
+
 const Query = {
     users(parent, args, { prisma }, info) {
 
@@ -19,49 +21,86 @@ const Query = {
         return prisma.query.users(opArgs, info)
     },
     comments(parent, args, { prisma }, info) {
-        const opArgs = {}
+        return prisma.query.comments(null, info)
+    },
 
-        if (args.query) {
-            opArgs.where = {
-                text_contains: args.query
+    myPosts(parent, args, { prisma, request }, info) {
+        const userId = getUserId(request, true)
+
+        const opArgs = {
+            where: {
+                author: {
+                    id: userId
+                }
             }
         }
 
-        return prisma.query.comments(opArgs, info)
+        if (args.query) {
+            opArgs.where.OR = [
+                {
+                    title_contains: args.query
+                },
+                {
+                    body_contains: args.query
+                }
+            ]
+        }
+        
+        return prisma.query.posts(opArgs, info)
+
     },
+
     posts(parent, args, { prisma }, info) {
-        const opArgs = {}
+        const opArgs = {
+            where: {
+                published: true
+            }
+        }
 
         if (args.query) {
-            opArgs.where = {
-                OR: [
-                    {
-                        title_contains: args.query
-                    },
-                    {
-                        body_contains: args.query
-                    }
-                ]
-            }
+            opArgs.where.OR = [
+                {
+                    title_contains: args.query
+                },
+                {
+                    body_contains: args.query
+                }
+            ]
         }
 
         return prisma.query.posts(opArgs, info)
     },
-    me() {
-        return {
-            id: 'abc',
-            name: 'Leonildo',
-            email: 'leocsilva@gmail.com',
-            age: 40
-        }
+    async me(parent, args, { prisma, request }, info) {
+
+        const userId = getUserId(request, true)
+
+        return await prisma.query.user({
+            where: {
+                id: userId
+            }
+        })
+
     },
-    post() {
-        return {
-            id: 'abc',
-            title: 'GrahQL course',
-            body: 'This is a new GraphQL Course',
-            published: true
+    async post(parent, args, { prisma, request }, info) {
+
+        const userId = getUserId(request, false)
+
+        const posts = await prisma.query.posts({
+            where: {
+                id: args.id,
+                OR: [{
+                    published: true
+                }, {
+                    author: { id: userId }
+                }]
+            }
+        }, info)
+
+        if (posts.length == 0) {
+            throw new Error('Post not found')
         }
+
+        return posts[0]
     }
 }
 

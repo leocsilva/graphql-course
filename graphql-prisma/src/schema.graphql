@@ -2,20 +2,33 @@ type Query {
     users(query: String): [User!]!
     posts(query: String): [Post!]!
     me: User!
-    post: Post!
+    post(id: ID!): Post!
     comments: [Comment!]!
+    myPosts(query: String): [Post!]!
 }
 
 type Mutation {
     createUser(data: CreateUserInput!): User!
     createPost(data: CreatePostInput!): Post!
     createComment(data: CreateCommentInput!): Comment!
-    deleteUser(id: ID!): User!
+    deleteUser: User!
     deletePost(id: ID!): Post!
     deleteComment(id: ID!): Comment!
-    updateUser(id: ID!, data: UpdateUserInput!): User!
+    updateUser(data: UpdateUserInput!): User!
     updatePost(id: ID!, data: UpdatePostInput!): Post!    
-    updateComment(id: ID!, data: UpdateCommentInput!): Comment!    
+    updateComment(id: ID!, data: UpdateCommentInput!): Comment!
+    login(data: LoginUserInput!): AuthPayload!
+
+}
+
+input LoginUserInput {
+    email: String!
+    password: String!
+}
+
+type AuthPayload {
+    token: String!
+    user: User!
 }
 
 type Subscription {
@@ -27,18 +40,16 @@ type Subscription {
 input CreateUserInput {
     name: String!
     email: String!
-    age: Int
+    password: String!
 }
 
 input UpdateUserInput {
     name: String
     email: String
-    age: Int
 }
 
 input CreateCommentInput {
     text: String!
-    authorId: ID!
     postId: ID!
 }   
 
@@ -49,8 +60,7 @@ input UpdateCommentInput {
 input CreatePostInput {
     title: String!
     body: String!
-    published: Boolean!,
-    authorId: ID!
+    published: Boolean!
 }    
 
 input UpdatePostInput {
@@ -62,7 +72,8 @@ input UpdatePostInput {
 type User  {
     id: ID!
     name: String!
-    email: String!
+    email: String
+    password: String!
     posts: [Post!]!
     comments: [Comment!]!
 }
@@ -85,10 +96,10 @@ type Comment {
 
 type PostSubscritionPayload {
     mutation: String!
-    data: Post!
+    node: Post
 }
 
 type CommentSubscritionPayload {
     mutation: String!
-    data: Comment!
+    node: Comment
 }
