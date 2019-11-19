@@ -57,7 +57,7 @@ const Mutation = {
             data: args.data
         }, info)
 
-    },    
+    },
 
     deleteUser(parent, args, { prisma, request }, info) {
 
@@ -65,7 +65,7 @@ const Mutation = {
         return prisma.mutation.deleteUser({ where: { id: userId } }, info)
 
     },
-    
+
     // POST
     createPost(parent, args, { prisma, request }, info) {
 
@@ -89,15 +89,24 @@ const Mutation = {
 
         const userId = getUserId(request)
 
-        const postExists = await prisma.exists.Post({
-            id: args.id,
-            author: {
-                id: userId
+        const post = await prisma.query.post({
+            where: {
+                id: args.id,
             }
-        })
+        }, "{id published author {id}}")
 
-        if (!postExists) {
+        if (post.author.id != userId) {
             throw new Error('Unable to update post')
+        }
+
+        if (post.published && args.data.published == false) {
+            await prisma.mutation.deleteManyComments({
+                where : {
+                    post: {
+                        id: args.id
+                    }
+                }
+            })
         }
 
         return prisma.mutation.updatePost({
@@ -137,7 +146,7 @@ const Mutation = {
             published: true
         })
 
-        if (! published) {
+        if (!published) {
             throw new Error("This post is not published")
         }
 
@@ -157,7 +166,7 @@ const Mutation = {
             }
         }, info)
 
-    },    
+    },
 
     async updateComment(parent, args, { prisma, request }, info) {
 
@@ -199,7 +208,7 @@ const Mutation = {
 
         return prisma.mutation.deleteComment({ where: { id: args.id } }, info)
 
-    },    
+    },
 }
 
 export { Mutation as default }
