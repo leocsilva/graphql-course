@@ -17,7 +17,7 @@ const Mutation = {
         }
 
         return {
-            token: jwt.sign({ userId: user.id }, 'thisisasecret'),
+            token: jwt.sign({ userId: user.id }, 'thisisasecret', { expiresIn: '7 days'}),
             user: { ...user }
         }
 
